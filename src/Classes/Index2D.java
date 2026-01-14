@@ -15,6 +15,14 @@ public class Index2D implements Pixel2D {
         X = other.getX();
         Y = other.getY();
     }
+    public Index2D(String string) {
+        String[] string_list = string.split(",");
+        int x = Integer.parseInt(string_list[1]);
+        int y = Integer.parseInt(string_list[0]);
+        this(x,y);
+    }
+
+
     @Override
     public int getX() {
         return X;

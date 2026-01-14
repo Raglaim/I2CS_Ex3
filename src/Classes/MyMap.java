@@ -3,6 +3,7 @@ package Classes;
 import Classes.Interfaces.Map2D;
 import Classes.Interfaces.Pixel2D;
 
+import javax.imageio.stream.ImageInputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class MyMap implements Map2D, Serializable{
     private int W = 0;
     private int H = 0;
     private int[][] MAP = new int[W][H];
+    private Boolean CYCLIC = true;
 
     /**
      * Creates a new map with specific width (w), height (h), and fills every pixel with the initial value (v).
@@ -151,14 +153,10 @@ public class MyMap implements Map2D, Serializable{
     public boolean isInside(Pixel2D p) {return p.getX() >= 0 && p.getX() < this.W && p.getY() >= 0 && p.getY() < this.H;}
 
     @Override
-    public boolean isCyclic() {
-        return false;
-    }
+    public boolean isCyclic() {return CYCLIC;}
 
     @Override
-    public void setCyclic(boolean cy) {
-
-    }
+    public void setCyclic(boolean cy) {CYCLIC = cy;}
 
     /**
      * Checks if the current map has the exact same width and height as another map p.
@@ -306,6 +304,7 @@ public class MyMap implements Map2D, Serializable{
     @Override
     public int fill(Pixel2D start, int new_v) {
         int ans = 0; // making result
+        boolean cyclic = this.isCyclic();
         int startingColor = this.getPixel(start);
         // checking if the starting pixel is already the new color
         if (startingColor == new_v) {return 0;}
@@ -357,11 +356,11 @@ public class MyMap implements Map2D, Serializable{
         Map2D maze = this.preppingMaze(obsColor);
 
         // checking if there is a way to get from s pixel to e pixel
-        maze.fill(start,1,cyclic);
+        maze.fill(start,1);
         if (maze.getPixel(end) != 1) {return null;}
 
         // making a BFS dictionary
-        Map<Pixel2D, Pixel2D> prev = this.solve(start,cyclic);
+        Map<Pixel2D, Pixel2D> prev = this.solve(start);
 
         // using the dictionary to get from e pixel to s pixel
         ans = reconstructPath(end, prev).getList();
@@ -380,7 +379,7 @@ public class MyMap implements Map2D, Serializable{
         Map2D maze = this.preppingMaze(obsColor);
 
         // setting every reachable pixel to 1
-        maze.fill(start,1,cyclic);
+        maze.fill(start,1);
 
         // setting every unreachable pixel to -1
         for (int y = 0; y < this.getHeight(); y+=1) {
@@ -398,7 +397,7 @@ public class MyMap implements Map2D, Serializable{
             for (int x = 0; x < this.getWidth(); x+=1) {
                 Pixel2D p = new Index2D(x,y);
                 if (maze.getPixel(p) == 1) {
-                    PixelsContainer path = new PixelsContainer(maze.shortestPath(start, p, -1, cyclic));
+                    PixelsContainer path = new PixelsContainer(maze.shortestPath(start, p, -1));
                     int pathLength = path.getLength();
                     ans.setPixel(p,pathLength - 1);
                 }
@@ -449,8 +448,9 @@ public class MyMap implements Map2D, Serializable{
         }
     }
 
-    private Map<Pixel2D, Pixel2D> solve(Pixel2D s, Boolean cyclic) {
+    private Map<Pixel2D, Pixel2D> solve(Pixel2D s) {
         int v = this.getPixel(s);
+        boolean cyclic = this.isCyclic();
         PixelsContainer q = new PixelsContainer();
         q.enqueue(s);
         Map<Pixel2D,Boolean> visited = new HashMap<>();
