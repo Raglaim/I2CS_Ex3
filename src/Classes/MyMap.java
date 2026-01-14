@@ -32,7 +32,7 @@ public class MyMap implements Map2D, Serializable{
     private int W = 0;
     private int H = 0;
     private int[][] MAP = new int[W][H];
-    private Boolean CYCLIC = true;
+    private Boolean CYCLIC = false;
 
     /**
      * Creates a new map with specific width (w), height (h), and fills every pixel with the initial value (v).
@@ -360,10 +360,11 @@ public class MyMap implements Map2D, Serializable{
         if (maze.getPixel(end) != 1) {return null;}
 
         // making a BFS dictionary
-        Map<Pixel2D, Pixel2D> prev = this.solve(start);
+        Map<Pixel2D, Pixel2D> prev = this.solve(start, obsColor);
 
         // using the dictionary to get from e pixel to s pixel
-        ans = reconstructPath(end, prev).getList();
+        PixelsContainer container = reconstructPath(end, prev);
+        ans = container.getList();
 
         return ans;
     }
@@ -391,12 +392,14 @@ public class MyMap implements Map2D, Serializable{
             }
         }
 
+        maze.fill(start,0);
+
         ans = new MyMap(maze.getMap());
         // setting every pixel to its distance from the start
         for (int y = 0; y < this.getHeight(); y+=1) {
             for (int x = 0; x < this.getWidth(); x+=1) {
                 Pixel2D p = new Index2D(x,y);
-                if (maze.getPixel(p) == 1) {
+                if (maze.getPixel(p) == 0) {
                     PixelsContainer path = new PixelsContainer(maze.shortestPath(start, p, -1));
                     int pathLength = path.getLength();
                     ans.setPixel(p,pathLength - 1);
@@ -448,7 +451,15 @@ public class MyMap implements Map2D, Serializable{
         }
     }
 
-    private Map<Pixel2D, Pixel2D> solve(Pixel2D s) {
+    private Map<Pixel2D, Pixel2D> solve(Pixel2D s, int obs) {
+        for (int y = 0; y < this.getHeight(); y+=1) {
+            for (int x = 0; x < this.getWidth(); x+=1) {
+                if (this.getPixel(x, y) != obs) {
+                    this.setPixel(x, y, 0);
+                }
+            }
+        }
+
         int v = this.getPixel(s);
         boolean cyclic = this.isCyclic();
         PixelsContainer q = new PixelsContainer();

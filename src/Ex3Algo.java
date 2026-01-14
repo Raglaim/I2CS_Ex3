@@ -96,18 +96,18 @@ public class Ex3Algo implements PacManAlgo{
 
         Pixel2D[] path = board_map.shortestPath(pos, target, obs);
 
-        if (path != null && path.length >= 1) {
-            Pixel2D nextStep = path[0];
+        if (path != null && path.length > 1) {
+            Pixel2D nextStep = path[1];
             return coordsToDirection(pos, nextStep);
         }
         return randomDir();
     }
 
     private static int coordsToDirection(Pixel2D current, Pixel2D next) {
-        if (next.getX() > current.getX()) return Game.UP;
-        if (next.getX() < current.getX()) return Game.DOWN;
         if (next.getY() > current.getY()) return Game.RIGHT;
         if (next.getY() < current.getY()) return Game.LEFT;
+        if (next.getX() > current.getX()) return Game.UP;
+        if (next.getX() < current.getX()) return Game.DOWN;
         return Game.UP; // Default
     }
 }
