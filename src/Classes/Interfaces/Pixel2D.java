@@ -13,6 +13,8 @@ public interface Pixel2D {
      */
     public int getY();
 
+    public Pixel2D move(int x, int y);
+
     /**
      * This method computes the 2D (Euclidean) distance beteen this pixel and p2 pixel, i.e., (Math.sqrt(dx*dx+dy*dy))
      * @throws RuntimeException if p2==null.

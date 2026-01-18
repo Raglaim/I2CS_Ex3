@@ -40,24 +40,25 @@ public class MyMap implements Map2D, Serializable{
      * @param h height
      * @param v initial value
      */
-    public MyMap(int w, int h, int v) {init(w, h, v);}
+    public MyMap(int w, int h, int v, boolean c) {init(w, h, v);}
 
     /**
      * Creates a square map where both width and height equal size.
      * @param size width and height
      */
-    public MyMap(int size) {this(size,size, 0);}
+    public MyMap(int size, boolean c) {this(size,size, 0, c);}
 
     /**
      * Constructs a map from a given 2D array. If the input array is null, it creates a default map instead.
      * @param data source 2D array
      */
-    public MyMap(int[][] data) {
+    public MyMap(int[][] data, boolean c) {
         if (data == null) {
             init(DEFAULT_W, DEFAULT_H, DEFAULT_V);
             return;
         }
         init(data);
+        this.setCyclic(c);
     }
 
     /**
@@ -394,7 +395,7 @@ public class MyMap implements Map2D, Serializable{
 
         maze.fill(start,0);
 
-        ans = new MyMap(maze.getMap());
+        ans = new MyMap(maze.getMap(), maze.isCyclic());
         // setting every pixel to its distance from the start
         for (int y = 0; y < this.getHeight(); y+=1) {
             for (int x = 0; x < this.getWidth(); x+=1) {
@@ -437,7 +438,7 @@ public class MyMap implements Map2D, Serializable{
                 m[y][x] = Integer.parseInt(pixels[x]);
             }
         }
-        return new MyMap(m);
+        return new MyMap(m, false);
     }
 
 
@@ -452,23 +453,25 @@ public class MyMap implements Map2D, Serializable{
     }
 
     private Map<Pixel2D, Pixel2D> solve(Pixel2D s, int obs) {
-        for (int y = 0; y < this.getHeight(); y+=1) {
-            for (int x = 0; x < this.getWidth(); x+=1) {
-                if (this.getPixel(x, y) != obs) {
-                    this.setPixel(x, y, 0);
+        MyMap maze = new MyMap(this.getMap(), this.isCyclic());
+        
+        for (int y = 0; y < maze.getHeight(); y+=1) {
+            for (int x = 0; x < maze.getWidth(); x+=1) {
+                if (maze.getPixel(x, y) != obs) {
+                    maze.setPixel(x, y, 0);
                 }
             }
         }
 
-        int v = this.getPixel(s);
-        boolean cyclic = this.isCyclic();
+        int v = maze.getPixel(s);
+        boolean cyclic = maze.isCyclic();
         PixelsContainer q = new PixelsContainer();
         q.enqueue(s);
         Map<Pixel2D,Boolean> visited = new HashMap<>();
-        for (int y = 0; y < this.H; y+=1) {
-            for (int x = 0; x < this.W; x+=1) {
+        for (int y = 0; y < maze.H; y+=1) {
+            for (int x = 0; x < maze.W; x+=1) {
                 Pixel2D p = new Index2D(x,y);
-                if (getPixel(p) == v) {
+                if (maze.getPixel(p) == v) {
                     visited.put(p, false);
                 }
             }
@@ -479,7 +482,7 @@ public class MyMap implements Map2D, Serializable{
         if (!cyclic) {
             while (!q.isEmpty()){
                 Pixel2D node = q.dequeue();
-                PixelsContainer neighbours = this.checkNeighboursNotCyclic(node,v);
+                PixelsContainer neighbours = maze.checkNeighboursNotCyclic(node,v);
 
                 for (Pixel2D next : neighbours.getList()) {
                     if (!visited.get(next)) {
@@ -493,7 +496,7 @@ public class MyMap implements Map2D, Serializable{
         else {
             while (!q.isEmpty()){
                 Pixel2D node = q.dequeue();
-                PixelsContainer neighbours = this.checkNeighboursCyclic(node,v);
+                PixelsContainer neighbours = maze.checkNeighboursCyclic(node,v);
 
                 for (Pixel2D next : neighbours.getList()) {
                     if (!visited.get(next)) {
@@ -594,7 +597,7 @@ public class MyMap implements Map2D, Serializable{
 
     private Map2D preppingMaze(int obsColor){
         // making a copy for the maze
-        Map2D maze = new MyMap(getMap());
+        Map2D maze = new MyMap(this.getMap(), this.isCyclic());
 
         // setting obsColor to -1
         if (obsColor != -1) {

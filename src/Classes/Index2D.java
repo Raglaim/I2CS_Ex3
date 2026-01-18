@@ -34,6 +34,10 @@ public class Index2D implements Pixel2D {
     }
 
     @Override
+    public Pixel2D move(int x, int y) {return  new Index2D(this.getX()+x, this.getY()+y);}
+
+
+    @Override
     public double distance2D(Pixel2D p2) {
         return Math.sqrt(Math.pow(p2.getX() - this.X, 2) + Math.pow(p2.getY() - this.Y, 2));
     }
