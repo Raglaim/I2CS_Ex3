@@ -16,10 +16,9 @@ public class Index2D implements Pixel2D {
         Y = other.getY();
     }
     public Index2D(String string) {
-        String[] string_list = string.split(",");
-        int x = Integer.parseInt(string_list[1]);
-        int y = Integer.parseInt(string_list[0]);
-        this(x,y);
+        String[] string_list = string.replace("(", "").replace(")", "").split(",");
+        this.X = Integer.parseInt(string_list[1]);
+        this.Y = Integer.parseInt(string_list[0]);
     }
 
 
