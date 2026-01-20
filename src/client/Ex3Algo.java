@@ -1,3 +1,5 @@
+package client;
+
 import Classes.Index2D;
 import Classes.Interfaces.Map2D;
 import Classes.Interfaces.Pixel2D;

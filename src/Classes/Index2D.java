@@ -27,11 +27,13 @@ public class Index2D implements Pixel2D {
     public int getX() {
         return X;
     }
+    public void setX(int x) {this.X = x;}
 
     @Override
     public int getY() {
         return Y;
     }
+    public void setY(int y) {this.Y = y;}
 
     @Override
     public Pixel2D move(int x, int y) {return  new Index2D(this.getX()+x, this.getY()+y);}

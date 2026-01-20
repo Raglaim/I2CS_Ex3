@@ -3,8 +3,11 @@ package Classes;
 import Classes.Interfaces.Map2D;
 import Classes.Interfaces.Pixel2D;
 
-import javax.imageio.stream.ImageInputStream;
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -441,6 +444,54 @@ public class MyMap implements Map2D, Serializable{
         return new MyMap(m, false);
     }
 
+    /**
+     * Loads a map from a text file located in the "SavedMaps" directory.
+     * <p>
+     * The method reads the file content and parses it using {@link MyMap#mapFromString(String)}.
+     * The file path is currently hardcoded to a specific user directory.
+     * </p>
+     *
+     * @param mapFileName the name of the file to load (must end with .txt)
+     * @return a new MyMap instance populated with data from the file, or an empty map if the file extension is invalid.
+     */
+    public static MyMap loadMap(String mapFileName) {
+        if (checkTxt(mapFileName)) {
+            Path targetDir = Paths.get("src\\server\\levels");
+            Path path = targetDir.resolve(mapFileName);
+            try {
+                String content = Files.readString(path);
+                return MyMap.mapFromString(content);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                return new MyMap();
+            }
+
+        } else {
+            return new MyMap();
+        }
+    }
+
+    /**
+     * Saves the current state of a Map2D object to a text file.
+     * <p>
+     * The map is converted to a string representation and written to the
+     * "SavedMaps" directory.
+     * </p>
+     *
+     * @param map         the map object to save
+     * @param mapFileName the name of the file to save as
+     */
+    public static void saveMap(Map2D map, String mapFileName) {
+        Path targetDir = Paths.get("src\\server\\levels");
+        Path path = targetDir.resolve(mapFileName);
+        String content = map.toString();
+        try {
+            Files.writeString(path, content);
+        }
+        catch (IOException e) {e.printStackTrace();}
+    }
+
 
     ////////////////////// Private Methods ///////////////////////
 
@@ -451,6 +502,9 @@ public class MyMap implements Map2D, Serializable{
             System.arraycopy(ans[i], 0, MAP[i], 0, ans[i].length);
         }
     }
+
+    private static boolean checkTxt(String fileName) {return fileName.toLowerCase().endsWith(".txt");}
+
 
     private Map<Pixel2D, Pixel2D> solve(Pixel2D s, int obs) {
         MyMap maze = new MyMap(this.getMap(), this.isCyclic());

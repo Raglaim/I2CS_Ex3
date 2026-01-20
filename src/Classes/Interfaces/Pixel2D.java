@@ -8,10 +8,12 @@ public interface Pixel2D {
      * @return the X coordinate (integer) of the pixel.
      */
     public int getX();
+    public void setX(int x);
     /**
      * @return the Y coordinate (integer) of the pixel.
      */
     public int getY();
+    public void setY(int y);
 
     public Pixel2D move(int x, int y);
 

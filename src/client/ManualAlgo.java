@@ -1,3 +1,5 @@
+package client;
+
 import exe.ex3.game.PacManAlgo;
 import exe.ex3.game.PacmanGame;
 
