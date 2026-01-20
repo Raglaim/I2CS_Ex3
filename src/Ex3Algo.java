@@ -8,7 +8,9 @@ import exe.ex3.game.PacManAlgo;
 import exe.ex3.game.PacmanGame;
 
 import java.awt.*;
-import java.security.spec.RSAOtherPrimeInfo;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
 
 /**
  * This is the major algorithmic class for Ex3 - the PacMan game:
@@ -17,211 +19,266 @@ import java.security.spec.RSAOtherPrimeInfo;
  * Your task is to implement (here) your PacMan algorithm.
  */
 public class Ex3Algo implements PacManAlgo{
-	private int _count;
-	public Ex3Algo() {_count=0;}
-	@Override
-	/**
-	 *  Add a short description for the algorithm as a String.
-	 */
-	public String getInfo() {
-		return null;
-	}
-	@Override
-	/**
-	 * This ia the main method - that you should design, implement and test.
-	 */
-	public int move(PacmanGame game) {
+    private int _count;
+    public Ex3Algo() {_count=0;}
+    @Override
+    /**
+     *  Add a short description for the algorithm as a String.
+     */
+    public String getInfo() {
+        return null;
+    }
+    @Override
+    /**
+     * This ia the main method - that you should design, implement and test.
+     */
+    public int move(PacmanGame game) {
         int code = 0;
-        int[][] board = game.getGame(code);
-        boolean isCyclic = game.isCyclic();
-        MyMap board_map = new MyMap(board, isCyclic);
-        int wallColor = Game.getIntColor(Color.BLUE, code);
-        String pos = game.getPos(code);
-        Index2D pm = new Index2D(pos);
+        int[][] board = game.getGame(0);
+        boolean cyclic = game.isCyclic();
+        MyMap boardMap = new MyMap(board, cyclic);
+        int obs = Game.getIntColor(Color.BLUE, code);
+        boardMap.setPixel(13,11,obs);
+        Index2D pm = new Index2D(game.getPos(code));
         GhostCL[] ghosts = game.getGhosts(code);
         Index2D[] gs = new Index2D[ghosts.length];
         for (int i = 0; i < ghosts.length; i+=1) {
-            Index2D g = new Index2D(ghosts[i].getPos(code));
-            gs[i] = g;
-        }
-		_count++;
-
-        int cg_index = closest_ghost(board_map, pm, gs, wallColor);
-        Pixel2D cg = gs[cg_index];
-        int cg_dis = calc_dis(board_map, pm, cg, wallColor);
-        Pixel2D[] cg_path = calc_path(board_map, pm, cg, wallColor);
-        double eatable = ghosts[cg_index].remainTimeAsEatable(code);
-
-        if (this._count > 50) {
-            if (cg_dis < 3) {
-                if (eatable > 0) {
-                    return go(board_map, cg_path, false, wallColor);
-                } else {
-                    return go(board_map, cg_path, true, wallColor);
-                }
+            if (ghosts[i].getStatus() == 1) {
+                Index2D g = new Index2D(ghosts[i].getPos(code));
+                gs[i] = g;
             }
         }
-        return closest_pink(board_map, pm, wallColor);
+
+        Pixel2D[] cgs = getClosestGhosts(boardMap, pm, gs, obs);
+        int dl = getDangerLevel(boardMap, pm, cgs, obs);
+        _count++;
+
+        if (ghosts[0].remainTimeAsEatable(code) > 2) {return closestPink(boardMap, pm, cgs, obs);}
+        if (dl >= 25) {
+            if (closestPinkDistance(boardMap, pm, cgs, obs).length <= 3) {return closestPink(boardMap, pm, cgs, obs);}
+            return run(boardMap, pm, cgs, obs);
+        }
+        return closestPink(boardMap, pm, cgs, obs);
     }
-	private static void printBoard(int[][] b) {
-		for(int y =0;y<b[0].length;y++){
-			for(int x =0;x<b.length;x++){
-				int v = b[x][y];
-				System.out.print(v+"\t");
-			}
-			System.out.println();
-		}
-	}
-	private static void printGhosts(GhostCL[] gs) {
-		for(int i=0;i<gs.length;i++){
-			GhostCL g = gs[i];
-			System.out.println(i+") status: "+g.getStatus()+",  type: "+g.getType()+",  pos: "+g.getPos(0)+",  time: "+g.remainTimeAsEatable(0));
-		}
-	}
-	private static int randomDir() {
-		int[] dirs = {Game.UP, Game.LEFT, Game.DOWN, Game.RIGHT};
-		int ind = (int)(Math.random()*dirs.length);
-		return dirs[ind];
-	}
 
-    private static int closest_pink(MyMap board, Pixel2D pm, int obs) {
-        Pixel2D target = null;
+    private static void printBoard(int[][] b) {
+        for(int y =0;y<b[0].length;y++){
+            for(int x =0;x<b.length;x++){
+                int v = b[x][y];
+                System.out.print(v+"\t");
+            }
+            System.out.println();
+        }
+    }
+    private static void printGhosts(GhostCL[] gs) {
+        for(int i=0;i<gs.length;i++){
+            GhostCL g = gs[i];
+            System.out.println(i+") status: "+g.getStatus()+",  type: "+g.getType()+",  pos: "+g.getPos(0)+",  time: "+g.remainTimeAsEatable(0));
+        }
+    }
+    private static int randomDir() {
+        int[] dirs = {Game.UP, Game.LEFT, Game.DOWN, Game.RIGHT};
+        int ind = (int)(Math.random()*dirs.length);
+        return dirs[ind];
+    }
 
+    private static Pixel2D[] closestPinkDistance(MyMap board, Pixel2D pm, Pixel2D[] gs, int obs) {
         Map2D all_distance_board_map = board.allDistance(pm, obs);
 
-        int min_dis = 1000;
+        Pixel2D bestTarget = null;
+        double bestScore = Double.MAX_VALUE;
+
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {
-                if (board.getPixel(x,y) == 3){
-                    int dist = all_distance_board_map.getPixel(x,y);
-                    if (dist < min_dis) {
-                        min_dis = dist;
-                        target = new Index2D(x,y);
+                if (board.getPixel(x, y) == 3 || board.getPixel(x, y) == 5) {
+                    Pixel2D tempTarget = new Index2D(x, y);
+                    int dist = all_distance_board_map.getPixel(x, y);
+                    if (dist > bestScore) continue;
+                    int danger = getDangerLevel(board, tempTarget, gs, obs);
+                    switch (calcPaths(board, tempTarget, obs)){
+                        case 2 -> danger += 125;
+                        case 3 -> danger += 150;
+                    }
+                    double score = dist + (danger * 10);
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestTarget = tempTarget;
                     }
                 }
             }
         }
 
-        if (target == null) {
-            return randomDir();
-        }
+        if (bestTarget == null) {return null;}
 
-        Pixel2D[] path = calc_path(board, pm, target, obs);
-
-        return go(board, path, false, obs);
+        return calcPath(board, pm, bestTarget, obs);
     }
 
-    private static int go(MyMap board, Pixel2D[] path, boolean is_reversed, int obs) {
-        if (is_reversed) {
-            if (path != null && path.length > 1) {
-                Pixel2D current = path[0];
-                Pixel2D nextStep = path[1];
-                int dir = reverseDirection(coordsToDirection(current, nextStep, board));
-                nextStep = switch (dir) {
-                    case Game.UP -> current.move(1, 0);
-                    case Game.LEFT -> current.move(0, -1);
-                    case Game.DOWN -> current.move(-1, 0);
-                    case Game.RIGHT -> current.move(0, 1);
-                    default -> nextStep;
-                };
-                if (board.getPixel(nextStep) == obs) {
-                    nextStep = switch (dir) {
-                        case Game.UP, Game.DOWN -> {
-                            dir = Game.LEFT;
-                            yield current.move(0, -1);
-                        }
-                        case Game.LEFT, Game.RIGHT -> {
-                            dir = Game.UP;
-                            yield current.move(1, 0);
-                        }
-                        default -> nextStep;
-                    };
-                    if (board.getPixel(nextStep) == obs) {
-                        nextStep = switch (dir) {
-                            case Game.UP -> {
-                                dir = Game.DOWN;
-                                yield current.move(-1, 0);
-                            }
-                            case Game.LEFT -> {
-                                dir = Game.RIGHT;
-                                yield current.move(0, 1);
-                            }
-                            default -> nextStep;
-                        };
-                    }
-                }
-                return dir;
-            }
-        }
-        else {
-            if (path != null && path.length > 1) {
-                Pixel2D current = path[0];
-                Pixel2D nextStep = path[1];
-                return coordsToDirection(current, nextStep, board);
-            }
+    private static int closestPink(MyMap board, Pixel2D pm, Pixel2D[] gs, int obs) {return go(board, closestPinkDistance(board, pm, gs, obs), obs);}
+
+        private static int go(Map2D board, Pixel2D[] path, int obs) {
+        if (path != null && path.length > 1) {
+            Pixel2D current = path[0];
+            Pixel2D nextStep = path[1];
+            return coordsToDirection(board, current, nextStep);
         }
         return randomDir();
     }
 
-    // You need to pass the map dimensions to calculate the wrap accurately
-    private static int coordsToDirection(Pixel2D current, Pixel2D next, Map2D board) {
+    private static int run(Map2D board, Pixel2D current, Pixel2D[] gs, int obs) {
+        int safestDir = -1;
+        int minDanger = Integer.MAX_VALUE;
+        for (int dir = 1; dir <= 4; dir++) {
+            Pixel2D nextStep = switch (dir) {
+                case Game.UP -> current.move(1, 0);
+                case Game.LEFT -> current.move(0, -1);
+                case Game.DOWN -> current.move(-1, 0);
+                case Game.RIGHT -> current.move(0, 1);
+                default -> null;
+            };
+            if (!board.isInside(nextStep)) {
+                nextStep = switch (dir) {
+                    case Game.UP -> new Index2D(0, current.getY());
+                    case Game.LEFT -> new Index2D(current.getX(), board.getWidth()-1);
+                    case Game.DOWN -> new Index2D(board.getWidth()-1, current.getY());
+                    case Game.RIGHT -> new Index2D(current.getX(), 0);
+                    default -> null;
+                };
+            }
+            if (nextStep == null || board.getPixel(nextStep) == obs) {continue;}
+
+            if (isDeadEnd(board, current, nextStep, obs)) {
+                int currentDanger = 999;
+                if (currentDanger < minDanger) {
+                    minDanger = currentDanger;
+                    safestDir = dir;
+                }
+                continue;
+            }
+
+            int dangerLevel = getDangerLevel(board, nextStep, gs, obs);
+
+            if (dangerLevel < minDanger) {
+                minDanger = dangerLevel;
+                safestDir = dir;
+            }
+        }
+
+        if (safestDir == -1) {return randomDir();}
+
+        return safestDir;
+    }
+
+    private static int calcPaths(Map2D board, Pixel2D current, int obs) {
+        int openPaths = 0;
+        for (int dir = 1; dir <= 4; dir++) {
+            Pixel2D neighbor = switch (dir) {
+                case Game.UP -> current.move(1, 0);
+                case Game.LEFT -> current.move(0, -1);
+                case Game.DOWN -> current.move(-1, 0);
+                case Game.RIGHT -> current.move(0, 1);
+                default -> null;
+            };
+            if (!board.isInside(neighbor)) {
+                neighbor = switch (dir) {
+                    case Game.UP -> new Index2D(0, current.getY());
+                    case Game.LEFT -> new Index2D(current.getX(), board.getHeight()-1);
+                    case Game.DOWN -> new Index2D(board.getWidth()-1, current.getY());
+                    case Game.RIGHT -> new Index2D(current.getX(), 0);
+                    default -> null;
+                };
+            }
+            if (neighbor != null && board.getPixel(neighbor) != obs) {openPaths++;}
+        }
+        return openPaths;
+    }
+
+    private static boolean isDeadEnd(Map2D board, Pixel2D current, Pixel2D next, int obs) {
+        int openPaths = 0;
+        for (int dir = 1; dir <= 4; dir++) {
+            Pixel2D neighbor = switch (dir) {
+                case Game.UP -> next.move(1, 0);
+                case Game.LEFT -> next.move(0, -1);
+                case Game.DOWN -> next.move(-1, 0);
+                case Game.RIGHT -> next.move(0, 1);
+                default -> null;
+            };
+            if (!board.isInside(neighbor)) {
+                neighbor = switch (dir) {
+                    case Game.UP -> new Index2D(0, next.getY());
+                    case Game.LEFT -> new Index2D(next.getX(), board.getHeight()-1);
+                    case Game.DOWN -> new Index2D(board.getWidth()-1, next.getY());
+                    case Game.RIGHT -> new Index2D(next.getX(), 0);
+                    default -> null;
+                };
+            }
+            if (neighbor != null && !neighbor.equals(current) && board.getPixel(neighbor) != obs) {openPaths++;}
+        }
+        return openPaths == 0;
+    }
+
+    private static int getDangerLevel(Map2D board, Pixel2D cord, Pixel2D[] gs, int obs) {
+        int level = 0;
+        for (Pixel2D g : gs) {
+            if (g == null) continue;
+            int dist = calcDis(board, cord, g, obs);
+            if (dist < 3) {level += 50;}
+            else if (dist < 5) {level += 25;}
+            else if (dist < 7) {level += 15;}
+            else if (dist < 9) {level += 10;}
+            else if (dist < 11) {level += 5;}
+        }
+        return level;
+    }
+
+    private static int coordsToDirection(Map2D board, Pixel2D current, Pixel2D next) {
         int dx = next.getX() - current.getX();
         int dy = next.getY() - current.getY();
         int height = board.getHeight();
         int width = board.getWidth();
 
-        // --- X-Axis (Vertical) ---
-        // Check if the distance is larger than half the map height (implies wrapping)
         if (Math.abs(dx) > height / 2) {
-            // Wrap logic: Invert normal direction
-            if (dx > 0) return Game.DOWN; // e.g., Moved from Bottom(0) to Top(99) via wrap
-            if (dx < 0) return Game.UP;   // e.g., Moved from Top(99) to Bottom(0) via wrap
+            if (dx > 0) return Game.DOWN;
+            if (dx < 0) return Game.UP;
         } else {
-            // Normal logic
             if (dx > 0) return Game.UP;
             if (dx < 0) return Game.DOWN;
         }
 
-        // --- Y-Axis (Horizontal) ---
-        // Check if the distance is larger than half the map width (implies wrapping)
         if (Math.abs(dy) > width / 2) {
-            // Wrap logic: Invert normal direction
-            if (dy > 0) return Game.LEFT;  // e.g., Moved from Left(0) to Right(99) via wrap
-            if (dy < 0) return Game.RIGHT; // e.g., Moved from Right(99) to Left(0) via wrap
+            if (dy > 0) return Game.LEFT;
+            if (dy < 0) return Game.RIGHT;
         } else {
-            // Normal logic
             if (dy < 0) return Game.LEFT;
             if (dy > 0) return Game.RIGHT;
         }
 
-        return Game.UP; // Default
+        return Game.UP;
     }
 
-    private static int reverseDirection(int dir) {
-        return switch (dir) {
-            case Game.UP -> Game.DOWN;
-            case Game.LEFT -> Game.RIGHT;
-            case Game.DOWN -> Game.UP;
-            case Game.RIGHT -> Game.LEFT;
-            default -> randomDir();
-        };
-    }
+    private static Pixel2D[] getClosestGhosts(Map2D board, Pixel2D cord, Pixel2D[] gs, int obs) {
+        Pixel2D[] activeGhosts = Arrays.stream(gs).filter(Objects::nonNull).toArray(Pixel2D[]::new);
 
-    private static int closest_ghost(MyMap board, Pixel2D pm, Pixel2D[] gs, int obs) {
-        Pixel2D g = new Index2D(gs[0]);
-        int dis = calc_dis(board, pm, g, obs);
-        int index = 0;
-        for (int i = 1; i < gs.length; i+=1) {
-            g = gs[i];
-            int temp_dis = calc_dis(board, pm, g, obs);
-            if (temp_dis < dis) {
-                dis = temp_dis;
-                index = i;
+        Arrays.sort(activeGhosts, new Comparator<Pixel2D>() {
+            @Override
+            public int compare(Pixel2D g1, Pixel2D g2) {
+                int d1 = calcDis(board, cord, g1, obs);
+                int d2 = calcDis(board, cord, g2, obs);
+                return Integer.compare(d1, d2);
             }
-        }
-        return index;
+        });
+
+        int resultSize = Math.min(4, activeGhosts.length);
+        Pixel2D[] cgs = new Index2D[resultSize];
+
+        System.arraycopy(activeGhosts, 0, cgs, 0, resultSize);
+
+        return cgs;
     }
 
-    private static Pixel2D[] calc_path(MyMap board, Pixel2D start, Pixel2D end, int obs) {return board.shortestPath(start, end, obs);}
-    private static int calc_dis(MyMap board, Pixel2D start, Pixel2D end, int obs){return calc_path(board, start, end, obs).length;}
+    private static Pixel2D[] calcPath(Map2D board, Pixel2D start, Pixel2D end, int obs) {return board.shortestPath(start, end, obs);}
+    private static int calcDis(Map2D board, Pixel2D start, Pixel2D end, int obs){
+        Pixel2D[] path = calcPath(board, start, end, obs);
+        if (path != null) {return path.length;}
+        else {return 0;}
+    }
 }
