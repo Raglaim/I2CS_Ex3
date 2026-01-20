@@ -32,12 +32,12 @@ public class Ex3Main {
     	ex3.init(GameInfo.CASE_SCENARIO, GameInfo.MY_ID, GameInfo.CYCLIC_MODE, GameInfo.RANDOM_SEED, GameInfo.RESOLUTION_NORM, GameInfo.DT, -1);
         PacManAlgo man = GameInfo.ALGO;
         while(ex3.getStatus()!=PacmanGame.DONE) {
-            _cmd = ex3.getKeyChar();
-            if(_cmd !=null && _cmd == ' ') {ex3.play();}
-            if (_cmd != null && _cmd == 'h') {
-            	System.out.println("Pacman help: keys: ' '-start, 'w,a,x,d'-directions, all other parameters should be configured via client.GameInfo.java, ");
-            }
-//            ex3.play();
+//            _cmd = ex3.getKeyChar();
+//            if(_cmd !=null && _cmd == ' ') {ex3.play();}
+//            if (_cmd != null && _cmd == 'h') {
+//            	System.out.println("Pacman help: keys: ' '-start, 'w,a,x,d'-directions, all other parameters should be configured via client.GameInfo.java, ");
+//            }
+            ex3.play();
             int  dir = man.move(ex3);
             ex3.move(dir);
 //            String pos = ex3.getPos(0);
