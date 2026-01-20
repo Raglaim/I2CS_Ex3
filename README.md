@@ -35,7 +35,7 @@ The algorithm analyzes the board state on every frame using the `MyMap` class to
 
 ### Installation
 1. Go to the Releases page of this repository.
-2. Download the latest `.zip` file (e.g., `Ex3_Release.zip`).
+2. Download the latest `.zip` file (e.g., `Ex3_2.zip`).
 3. **Extract the ZIP file** to a folder on your computer.
 
 ### ⚠️ Important: Assets
@@ -49,7 +49,7 @@ You can run the game using one of the following methods:
 
 **Method 1: Command Line (Recommended)** Open your terminal (Command Prompt or PowerShell) in the game folder and run:
 ```bash
-java --enable-preview -jar I2CS_Ex3.jar
+java --enable-preview -jar Ex3_2.jar
 ```
 
 **Method 2: Run Script (Windows)** If a run.bat file is included in the folder, simply double-click it to start the game.
