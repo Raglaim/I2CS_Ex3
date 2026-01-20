@@ -25,7 +25,7 @@ The algorithm analyzes the board state on every frame using the `MyMap` class to
 * **Cyclic Awareness:** The algorithm supports cyclic maps (wraparound borders), allowing Pac-Man to cross from one side of the screen to the other to escape or reach targets faster.
 
 ## 3. Video Demo
-[Insert a link to your 120-second video clip here as required by the assignment]
+https://youtu.be/DVSs2BHyFe4
 
 ## 4. How to Run
 
